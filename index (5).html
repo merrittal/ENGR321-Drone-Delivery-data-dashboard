@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drone Delivery Data Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#28331F;
+    --panel:#323F28;
+    --line:#4C5C40;
+    --ink:#EDF1E3;
+    --muted:#A2B091;
+    --sage:#8FB06B;
+    --sage-deep:#C7DE9F;
+    --sage-soft:#3D4C31;
+    --alert:#E58E70;
+    --alert-soft:#4A342A;
+    --display:'Space Grotesk', sans-serif;
+    --body:'Inter', sans-serif;
+    --mono:'JetBrains Mono', monospace;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  a{color:inherit;}
+  button{font:inherit; cursor:pointer;}
+
+  .wrap{
+    max-width:1000px;
+    margin:0 auto;
+    padding:0 28px;
+  }
+
+  /* ---------- NAV / TABS ---------- */
+  header.site{
+    border-bottom:1px solid var(--line);
+    background:var(--bg);
+    position:sticky;
+    top:0;
+    z-index:20;
+  }
+  nav.wrap{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    height:68px;
+    gap:24px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    font-family:var(--display);
+    font-weight:600;
+    font-size:15px;
+    white-space:nowrap;
+  }
+  .brand-mark{
+    width:9px; height:9px;
+    border-radius:2px;
+    background:var(--sage);
+  }
+  .tabs{
+    display:flex;
+    gap:4px;
+    overflow-x:auto;
+  }
+  .tab-btn{
+    background:none;
+    border:none;
+    padding:10px 14px;
+    font-family:var(--body);
+    font-weight:600;
+    font-size:13px;
+    color:var(--muted);
+    border-radius:7px;
+    white-space:nowrap;
+    display:flex;
+    align-items:center;
+    gap:7px;
+  }
+  .tab-btn .tab-index{
+    font-family:var(--mono);
+    font-weight:400;
+    font-size:11px;
+    color:var(--muted);
+  }
+  .tab-btn:hover{color:var(--ink); background:var(--sage-soft);}
+  .tab-btn.active{color:var(--sage-deep); background:var(--sage-soft);}
+  .tab-btn.active .tab-index{color:var(--sage);}
+
+  /* ---------- SHARED SECTION STYLES ---------- */
+  main{padding:48px 0 80px;}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--sage-deep);
+    margin-bottom:12px;
+  }
+  .page-title{
+    font-family:var(--display);
+    font-weight:600;
+    font-size:clamp(26px, 3.6vw, 34px);
+    margin-bottom:10px;
+  }
+  .page-sub{
+    color:var(--muted);
+    font-size:15px;
+    max-width:56ch;
+    margin-bottom:36px;
+  }
+
+  /* ---------- FORM (Request tab) ---------- */
+  .form-panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:32px;
+    max-width:560px;
+  }
+  .field{margin-bottom:22px;}
+  .field:last-of-type{margin-bottom:0;}
+  .field label{
+    display:block;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:8px;
+  }
+  .field .hint{
+    font-family:var(--body);
+    text-transform:none;
+    letter-spacing:0;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:400;
+  }
+  .field input[type="text"],
+  .field textarea{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:11px 14px;
+    font-family:var(--body);
+    font-size:14px;
+    color:var(--ink);
+    background:var(--bg);
+  }
+  .field input[type="text"]:focus,
+  .field textarea:focus{
+    outline:2px solid var(--sage);
+    outline-offset:1px;
+  }
+  .field textarea{resize:vertical; min-height:80px;}
+
+  .weight-options{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+  }
+  .weight-option{position:relative;}
+  .weight-option input{
+    position:absolute;
+    opacity:0;
+    inset:0;
+    cursor:pointer;
+    margin:0;
+  }
+  .weight-option-body{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    gap:6px;
+    position:relative;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:20px 12px 16px;
+    background:var(--bg);
+    transition:border-color .15s ease, background .15s ease, transform .15s ease;
+  }
+  .weight-option:hover .weight-option-body{
+    border-color:var(--sage);
+    transform:translateY(-1px);
+  }
+  .weight-check{
+    position:absolute;
+    top:10px;
+    right:10px;
+    width:14px;
+    height:14px;
+    border-radius:50%;
+    border:1.5px solid var(--line);
+    background:var(--panel);
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .weight-icon{
+    color:var(--muted);
+    margin-bottom:2px;
+    transition:color .15s ease;
+  }
+  .weight-icon-light{width:22px; height:22px;}
+  .weight-icon-medium{width:28px; height:28px;}
+  .weight-icon-heavy{width:34px; height:34px;}
+  .weight-option-name{
+    font-family:var(--display);
+    font-weight:600;
+    font-size:14px;
+  }
+  .weight-option-range{
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:var(--muted);
+  }
+  .weight-option input:checked + .weight-option-body{
+    border-color:var(--sage-deep);
+    background:var(--sage-soft);
+  }
+  .weight-option input:checked + .weight-option-body .weight-icon{
+    color:var(--sage-deep);
+  }
+  .weight-option input:checked + .weight-option-body .weight-option-range{
+    color:var(--sage-deep);
+  }
+  .weight-option input:checked + .weight-option-body .weight-check{
+    border-color:var(--sage-deep);
+    background:var(--sage-deep);
+    box-shadow:inset 0 0 0 3px var(--sage-soft);
+  }
+  .weight-option input:focus-visible + .weight-option-body{
+    outline:2px solid var(--sage);
+    outline-offset:1px;
+  }
+
+  .form-submit{margin-top:28px;}
+  .btn{
+    font-family:var(--body);
+    font-weight:600;
+    font-size:14px;
+    padding:11px 20px;
+    border-radius:7px;
+    text-decoration:none;
+    display:inline-block;
+    border:1px solid transparent;
+  }
+  .btn-primary{background:var(--sage-deep); color:#1B2415;}
+  .btn-primary:disabled{background:var(--line); color:var(--muted); cursor:not-allowed;}
+  .btn-ghost{border:1px solid var(--line); color:var(--ink); background:none;}
+  .btn-alert{border:1px solid var(--alert); color:var(--alert); background:none;}
+  .btn-alert:hover:not(:disabled){background:var(--alert-soft);}
+  .btn-ghost:hover:not(:disabled){border-color:var(--sage-deep);}
+
+  /* ---------- TRACK TAB ---------- */
+  .route-panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    overflow:hidden;
+  }
+  .route-panel-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:14px 20px;
+    border-bottom:1px solid var(--line);
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--muted);
+  }
+  .route-panel-head span.id{color:var(--ink);}
+  .route-summary{
+    font-size:11px;
+    color:var(--muted);
+    margin-top:3px;
+  }
+  .route-stage-badge{
+    color:var(--sage-deep);
+    background:var(--sage-soft);
+    padding:3px 10px;
+    border-radius:999px;
+    font-size:11px;
+    white-space:nowrap;
+  }
+  .route-stage-badge.is-returning{color:var(--alert); background:var(--alert-soft);}
+  .route-stage-badge.is-delivered{color:var(--sage-deep); background:var(--sage-soft);}
+
+  .route-map{
+    height:230px;
+    border-bottom:1px solid var(--line);
+  }
+  .route-map svg{width:100%; height:100%; display:block;}
+
+  .tree circle{fill:#6E8B67;}
+  .shadow{fill:#000000; opacity:0.08;}
+  .compass circle{fill:#FFFFFF; stroke:#DDE3D6; stroke-width:1.5;}
+  .compass path{fill:#4E6749;}
+  .compass-n{
+    font-family:var(--mono);
+    font-size:9px;
+    fill:#71806D;
+  }
+
+  .building polygon{fill:#4E6749;}
+  .building rect:not(.bwin):not(.bdoor):not(.broof-chimney){fill:#6E8B67;}
+  .building .broof-chimney{fill:#4E6749;}
+  .building .bwin{fill:#E6ECE1;}
+  .building .bdoor{fill:#4E6749;}
+  .building-dest polygon{fill:#3F5A3C;}
+  .building-dest .broof-chimney{fill:#3F5A3C;}
+  .building-dest rect:not(.bwin):not(.bdoor):not(.broof-chimney){fill:#5C7A57;}
+
+  .marker-role{
+    font-family:var(--mono);
+    font-size:10px;
+    letter-spacing:0.05em;
+    fill:#71806D;
+  }
+  .marker-value{
+    font-family:var(--body);
+    font-size:12px;
+    font-weight:600;
+    fill:#2B332A;
+  }
+  .drone{
+    opacity:0;
+    transition:opacity .3s ease;
+  }
+  .drone.is-active{opacity:1;}
+  .drone circle{fill:var(--sage-deep);}
+  .drone.is-returning circle{fill:var(--alert);}
+
+  .telemetry-strip{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    border-bottom:1px solid var(--line);
+  }
+  .telemetry-item{
+    padding:14px 20px;
+    border-left:1px solid var(--line);
+  }
+  .telemetry-item:first-child{border-left:none;}
+  .telemetry-label{
+    font-family:var(--mono);
+    font-size:10px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:5px;
+  }
+  .telemetry-value{
+    font-family:var(--mono);
+    font-size:17px;
+    font-weight:500;
+  }
+
+  .route-actions{
+    padding:20px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+
+  .idle-note{
+    padding:20px;
+    font-size:13px;
+    color:var(--muted);
+  }
+  .idle-note a{color:var(--sage-deep); border-bottom:1px solid var(--sage-deep); text-decoration:none;}
+
+  .pod-panel{
+    margin:0 20px 20px;
+    padding:16px 18px;
+    border:1px solid var(--sage);
+    background:var(--sage-soft);
+    border-radius:9px;
+  }
+  .pod-panel.is-error{border-color:var(--alert); background:var(--alert-soft);}
+  .pod-title{
+    font-family:var(--display);
+    font-weight:600;
+    font-size:14px;
+    margin-bottom:6px;
+  }
+  .pod-code{
+    font-family:var(--mono);
+    font-size:15px;
+    font-weight:600;
+    color:var(--sage-deep);
+    letter-spacing:0.04em;
+  }
+  .pod-desc{
+    font-size:13px;
+    color:var(--muted);
+    margin-top:4px;
+  }
+
+  /* ---------- LOGS TAB ---------- */
+  .table-panel{
+    border:1px solid var(--line);
+    border-radius:12px;
+    overflow:hidden;
+  }
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  thead th{
+    text-align:left;
+    font-family:var(--mono);
+    font-weight:500;
+    font-size:11px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    color:var(--muted);
+    padding:12px 18px;
+    background:var(--sage-soft);
+    border-bottom:1px solid var(--line);
+  }
+  tbody td{
+    padding:14px 18px;
+    border-bottom:1px solid var(--line);
+    font-family:var(--mono);
+    font-size:12.5px;
+  }
+  tbody tr:last-child td{border-bottom:none;}
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:11px;
+  }
+  .badge-dot{width:6px; height:6px; border-radius:50%;}
+  .badge.delivered{background:var(--sage-soft); color:var(--sage-deep);}
+  .badge.delivered .badge-dot{background:var(--sage-deep);}
+  .badge.returned{background:var(--alert-soft); color:var(--alert);}
+  .badge.returned .badge-dot{background:var(--alert);}
+  .logs-empty{
+    padding:44px 20px;
+    text-align:center;
+    color:var(--muted);
+    font-size:14px;
+    border:1px dashed var(--line);
+    border-radius:12px;
+  }
+
+  /* ---------- HELP TAB ---------- */
+  .strip{
+    display:grid;
+    grid-template-columns:36px 1fr;
+    gap:4px 16px;
+    padding:18px 0;
+    border-top:1px solid var(--line);
+  }
+  .strip:last-child{border-bottom:1px solid var(--line);}
+  .strip-num{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--sage);
+    padding-top:2px;
+  }
+  .strip-title{
+    font-family:var(--display);
+    font-weight:600;
+    font-size:16px;
+    margin-bottom:4px;
+  }
+  .strip-desc{color:var(--muted); font-size:14px; max-width:60ch;}
+
+  .help-block{margin-bottom:40px;}
+  .help-block:last-child{margin-bottom:0;}
+  .help-block h3{
+    font-family:var(--display);
+    font-weight:600;
+    font-size:17px;
+    margin-bottom:10px;
+  }
+  .faq{
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px 18px;
+    margin-bottom:10px;
+    background:var(--panel);
+  }
+  .faq-q{
+    font-family:var(--body);
+    font-weight:600;
+    font-size:14px;
+    margin-bottom:6px;
+  }
+  .faq-a{color:var(--muted); font-size:13.5px;}
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    border-top:1px solid var(--line);
+    padding:28px 0;
+  }
+  .footer-row{
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+    font-size:13px;
+    color:var(--muted);
+  }
+  .footer-row a{border-bottom:1px solid var(--line); text-decoration:none;}
+  .footer-row a:hover{color:var(--sage-deep); border-color:var(--sage-deep);}
+
+  @media (max-width:640px){
+    .telemetry-strip{grid-template-columns:1fr 1fr;}
+    .telemetry-item:nth-child(3){border-left:none; grid-column:1 / -1; border-top:1px solid var(--line);}
+    nav.wrap{height:auto; flex-direction:column; align-items:flex-start; padding:12px 20px;}
+    .tabs{width:100%;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <nav class="wrap">
+    <div class="brand"><span class="brand-mark"></span>DRONE DELIVERY DASHBOARD</div>
+    <div class="tabs" role="tablist">
+      <button class="tab-btn active" data-tab="tab-request"><span class="tab-index">01</span>Request Delivery</button>
+      <button class="tab-btn" data-tab="tab-track"><span class="tab-index">02</span>Track Package</button>
+      <button class="tab-btn" data-tab="tab-logs"><span class="tab-index">03</span>Logs</button>
+      <button class="tab-btn" data-tab="tab-help"><span class="tab-index">04</span>Help</button>
+    </div>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ TAB 1: REQUEST ============ -->
+  <section class="tab-panel active" id="tab-request">
+    <div class="eyebrow">Step 01</div>
+    <div class="page-title">Request a delivery</div>
+    <p class="page-sub">Submit a pickup and the fleet takes it from there. Once submitted, you'll be taken to Track Package to watch it move.</p>
+
+    <form class="form-panel" id="request-form">
+      <div class="field">
+        <label for="sender-name">Recipient Name</label>
+        <input type="text" id="sender-name" name="sender-name" placeholder="Jordan Reyes" required>
+      </div>
+
+      <div class="field">
+        <label for="dropzone">Address / Drop Zone</label>
+        <input type="text" id="dropzone" name="dropzone" placeholder="412 Kessler Ave, or a marked drop zone ID" required>
+      </div>
+
+      <div class="field">
+        <label>Package Weight</label>
+        <div class="weight-options">
+          <label class="weight-option">
+            <input type="radio" name="weight" value="Light" required>
+            <span class="weight-option-body">
+              <span class="weight-check"></span>
+              <svg class="weight-icon weight-icon-light" viewBox="0 0 24 24" fill="none"><path d="M12 3 L21 7.5 L21 16.5 L12 21 L3 16.5 L3 7.5 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M3 7.5 L12 12 L21 7.5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 12 L12 21" stroke="currentColor" stroke-width="1.6"/></svg>
+              <span class="weight-option-name">Light</span>
+              <span class="weight-option-range">Under 1 lb</span>
+            </span>
+          </label>
+          <label class="weight-option">
+            <input type="radio" name="weight" value="Medium">
+            <span class="weight-option-body">
+              <span class="weight-check"></span>
+              <svg class="weight-icon weight-icon-medium" viewBox="0 0 24 24" fill="none"><path d="M12 3 L21 7.5 L21 16.5 L12 21 L3 16.5 L3 7.5 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M3 7.5 L12 12 L21 7.5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 12 L12 21" stroke="currentColor" stroke-width="1.6"/></svg>
+              <span class="weight-option-name">Medium</span>
+              <span class="weight-option-range">1–3 lbs</span>
+            </span>
+          </label>
+          <label class="weight-option">
+            <input type="radio" name="weight" value="Heavy">
+            <span class="weight-option-body">
+              <span class="weight-check"></span>
+              <svg class="weight-icon weight-icon-heavy" viewBox="0 0 24 24" fill="none"><path d="M12 3 L21 7.5 L21 16.5 L12 21 L3 16.5 L3 7.5 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M3 7.5 L12 12 L21 7.5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 12 L12 21" stroke="currentColor" stroke-width="1.6"/></svg>
+              <span class="weight-option-name">Heavy</span>
+              <span class="weight-option-range">Up to 5 lbs max</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="notes">Drop-off Notes <span class="hint">(optional)</span></label>
+        <textarea id="notes" name="notes" placeholder="e.g. leave by the side gate, ring bell on arrival"></textarea>
+      </div>
+
+      <div class="form-submit">
+        <button type="submit" class="btn btn-primary">Submit request</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ============ TAB 2: TRACK ============ -->
+  <section class="tab-panel" id="tab-track">
+    <div class="eyebrow">Step 02</div>
+    <div class="page-title">Track package — active route</div>
+    <p class="page-sub">Live position for the package currently in the air.</p>
+
+    <div class="route-panel">
+      <div class="route-panel-head">
+        <div>
+          <div>ACTIVE ROUTE — <span class="id" id="route-id">DR-0000</span></div>
+          <div class="route-summary" id="route-summary">No delivery in progress</div>
+        </div>
+        <div class="route-stage-badge" id="stage-badge">STANDING BY</div>
+      </div>
+
+      <div class="route-map">
+        <svg viewBox="0 0 800 220" preserveAspectRatio="none">
+          <defs>
+            <symbol id="building" viewBox="0 0 40 40">
+              <rect class="broof-chimney" x="27" y="7" width="5" height="9" />
+              <polygon points="2,20 20,4 38,20" />
+              <rect x="6" y="20" width="28" height="16" rx="1.5" />
+              <rect class="bwin" x="11" y="24" width="7" height="7" rx="1" />
+              <rect class="bdoor" x="21" y="25" width="7" height="11" rx="1" />
+            </symbol>
+            <symbol id="tree" viewBox="0 0 20 24">
+              <rect x="8" y="14" width="4" height="10" fill="#8A6F52" />
+              <circle cx="10" cy="9" r="9" />
+            </symbol>
+          </defs>
+
+          <rect x="0" y="0" width="800" height="220" fill="#EEF1E6" />
+          <rect x="235" y="14" width="150" height="86" rx="8" fill="#DCE6D2" />
+          <rect x="440" y="118" width="170" height="78" rx="8" fill="#DCE6D2" />
+          <path d="M 24 176 Q 10 152 42 146 Q 76 140 82 172 Q 86 200 50 204 Q 16 206 24 176 Z" fill="#C7DCDD" />
+
+          <rect x="0" y="102" width="800" height="12" fill="#FBFBF7" />
+          <line x1="0" y1="108" x2="800" y2="108" stroke="#D7DECB" stroke-width="1.5" stroke-dasharray="10 8" />
+          <rect x="500" y="0" width="12" height="220" fill="#FBFBF7" />
+          <line x1="506" y1="0" x2="506" y2="220" stroke="#D7DECB" stroke-width="1.5" stroke-dasharray="10 8" />
+
+          <use href="#tree" class="tree" x="150" y="60" width="18" height="22" />
+          <use href="#tree" class="tree" x="310" y="150" width="16" height="20" />
+          <use href="#tree" class="tree" x="620" y="150" width="18" height="22" />
+          <use href="#tree" class="tree" x="740" y="150" width="16" height="20" />
+
+          <g class="compass" transform="translate(752,28)">
+            <circle r="16" />
+            <path d="M 0 -11 L 4 0 L 0 11 L -4 0 Z" />
+            <text y="-19" text-anchor="middle" class="compass-n">N</text>
+          </g>
+
+          <path id="flightpath" d="M 90 158 C 240 68, 480 198, 690 78" fill="none" stroke="#AEBFA0" stroke-width="2.5" stroke-dasharray="5 8" stroke-linecap="round"/>
+
+          <ellipse cx="90" cy="160" rx="17" ry="4" class="shadow" />
+          <use href="#building" class="building building-sender" x="70" y="118" width="40" height="40"/>
+          <text x="90" y="172" class="marker-role" text-anchor="middle">ORIGIN</text>
+          <text x="90" y="186" class="marker-value" id="sender-label" text-anchor="middle">Waiting for request</text>
+
+          <ellipse cx="690" cy="80" rx="17" ry="4" class="shadow" />
+          <use href="#building" class="building building-dest" x="670" y="38" width="40" height="40"/>
+          <text x="690" y="92" class="marker-role" text-anchor="middle">RECIPIENT</text>
+          <text x="690" y="106" class="marker-value" id="dest-label" text-anchor="middle">Waiting for request</text>
+
+          <g id="drone" class="drone">
+            <circle r="5"/>
+            <animateMotion id="drone-anim" dur="7s" fill="freeze" repeatCount="indefinite" rotate="auto" begin="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear">
+              <mpath href="#flightpath"/>
+            </animateMotion>
+          </g>
+        </svg>
+      </div>
+
+      <div class="telemetry-strip">
+        <div class="telemetry-item">
+          <div class="telemetry-label">Altitude</div>
+          <div class="telemetry-value" id="tm-altitude">—</div>
+        </div>
+        <div class="telemetry-item">
+          <div class="telemetry-label">Speed</div>
+          <div class="telemetry-value" id="tm-speed">—</div>
+        </div>
+        <div class="telemetry-item">
+          <div class="telemetry-label">ETA</div>
+          <div class="telemetry-value" id="tm-eta">—</div>
+        </div>
+      </div>
+
+      <div class="idle-note" id="idle-note">No delivery in progress — <a data-tab-link="tab-request">submit a request</a> to start tracking one.</div>
+
+      <div class="pod-panel" id="pod-panel" hidden>
+        <div class="pod-title" id="pod-title">Delivered</div>
+        <div class="pod-code" id="pod-code"></div>
+        <div class="pod-desc" id="pod-desc"></div>
+      </div>
+
+      <div class="route-actions" id="route-actions" hidden>
+        <button class="btn btn-primary" id="btn-received">Package received</button>
+        <button class="btn btn-alert" id="btn-error">Error — return to origin</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TAB 3: LOGS ============ -->
+  <section class="tab-panel" id="tab-logs">
+    <div class="eyebrow">Step 03</div>
+    <div class="page-title">Delivery logs</div>
+    <p class="page-sub">Every completed delivery, whether it landed successfully or returned to origin.</p>
+
+    <div id="logs-empty" class="logs-empty">No deliveries completed yet — finished routes will show up here.</div>
+
+    <div class="table-panel" id="logs-table-panel" hidden>
+      <table>
+        <thead>
+          <tr><th>Route ID</th><th>Recipient</th><th>Destination</th><th>Weight</th><th>Status</th><th>Detail</th><th>Time</th></tr>
+        </thead>
+        <tbody id="logs-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ TAB 4: HELP ============ -->
+  <section class="tab-panel" id="tab-help">
+    <div class="eyebrow">Step 04</div>
+    <div class="page-title">Help</div>
+    <p class="page-sub">How the dashboard maps to the delivery workflow, and answers to common questions.</p>
+
+    <div class="help-block">
+      <h3>The delivery workflow</h3>
+      <div class="strip">
+        <div class="strip-num">01</div>
+        <div>
+          <div class="strip-title">Package Request</div>
+          <div class="strip-desc">Fill out the Request Delivery tab with the recipient's name, drop zone, package weight, and any drop-off notes.</div>
+        </div>
+      </div>
+      <div class="strip">
+        <div class="strip-num">02</div>
+        <div>
+          <div class="strip-title">Navigation</div>
+          <div class="strip-desc">On submit, the drone is assigned and plots a route — you're taken straight to Track Package to watch it fly.</div>
+        </div>
+      </div>
+      <div class="strip">
+        <div class="strip-num">03</div>
+        <div>
+          <div class="strip-title">Delivery Monitoring</div>
+          <div class="strip-desc">The Track Package tab shows live position, altitude, speed, and ETA for the length of the flight.</div>
+        </div>
+      </div>
+      <div class="strip">
+        <div class="strip-num">04</div>
+        <div>
+          <div class="strip-title">Proof of Delivery</div>
+          <div class="strip-desc">Mark the package received to log a proof-of-delivery code, or flag an error to send the drone back to origin.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="help-block">
+      <h3>Frequently asked</h3>
+      <div class="faq">
+        <div class="faq-q">What does "Error — return to origin" do?</div>
+        <div class="faq-a">It sends the drone back the way it came instead of completing the drop-off. Use it if the package can't be delivered as planned. The attempt is logged as returned.</div>
+      </div>
+      <div class="faq">
+        <div class="faq-q">What is the proof-of-delivery code?</div>
+        <div class="faq-a">A unique code generated the moment a package is marked received, confirming the drop-off. It's saved with that delivery's entry in Logs.</div>
+      </div>
+      <div class="faq">
+        <div class="faq-q">Where do I see past deliveries?</div>
+        <div class="faq-a">The Logs tab lists every completed route, delivered or returned, with its weight class, status, and timestamp.</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap footer-row">
+    <div>Drone Delivery Data Dashboard — see <a href="README.md">README.md</a></div>
+    <div>Sample data shown for illustration</div>
+  </div>
+</footer>
+
+<script>
+  // ---------- Tab switching ----------
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const tabPanels = document.querySelectorAll('.tab-panel');
+
+  function showTab(id){
+    tabPanels.forEach(p => p.classList.toggle('active', p.id === id));
+    tabButtons.forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+  }
+
+  tabButtons.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+  document.querySelectorAll('[data-tab-link]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      showTab(el.dataset.tabLink);
+    });
+  });
+
+  // ---------- Elements ----------
+  const form = document.getElementById('request-form');
+  const drone = document.getElementById('drone');
+  const droneAnim = document.getElementById('drone-anim');
+  const stageBadge = document.getElementById('stage-badge');
+  const idleNote = document.getElementById('idle-note');
+  const routeActions = document.getElementById('route-actions');
+  const podPanel = document.getElementById('pod-panel');
+  const btnReceived = document.getElementById('btn-received');
+  const btnError = document.getElementById('btn-error');
+  const logsBody = document.getElementById('logs-body');
+  const logsEmpty = document.getElementById('logs-empty');
+  const logsTablePanel = document.getElementById('logs-table-panel');
+
+  let currentDelivery = null; // {id, name, dropzone, weightLabel}
+  let logs = [];
+  let etaInterval = null;
+  let etaSecondsLeft = 0;
+
+  const truncate = (str, max) => str.length > max ? str.slice(0, max - 1).trim() + '\u2026' : str;
+
+  const tmEta = document.getElementById('tm-eta');
+
+  function formatEta(totalSeconds){
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  }
+
+  function stopEtaCountdown(){
+    if (etaInterval){
+      clearInterval(etaInterval);
+      etaInterval = null;
+    }
+  }
+
+  const SIM_SECONDS_PER_TICK = 60; // 1 simulated minute passes per real second
+
+  function startEtaCountdown(){
+    stopEtaCountdown();
+    etaSecondsLeft = 300; // 5:00 of simulated time
+    tmEta.textContent = formatEta(etaSecondsLeft);
+    droneAnim.setAttribute('dur', (etaSecondsLeft / SIM_SECONDS_PER_TICK) + 's'); // real-time flight duration
+    etaInterval = setInterval(function(){
+      etaSecondsLeft = Math.max(0, etaSecondsLeft - SIM_SECONDS_PER_TICK);
+      tmEta.textContent = etaSecondsLeft > 0 ? formatEta(etaSecondsLeft) : 'Arrived';
+      if (etaSecondsLeft <= 0) stopEtaCountdown();
+    }, 1000);
+  }
+
+  function genCode(prefix, len){
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let out = prefix + '-';
+    for (let i = 0; i < len; i++) out += chars[Math.floor(Math.random() * chars.length)];
+    return out;
+  }
+
+  function setBadge(text, mode){
+    stageBadge.textContent = text;
+    stageBadge.classList.remove('is-returning', 'is-delivered');
+    if (mode === 'returning') stageBadge.classList.add('is-returning');
+    if (mode === 'delivered') stageBadge.classList.add('is-delivered');
+  }
+
+  // ---------- Submit a new request ----------
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+
+    const name = document.getElementById('sender-name').value.trim();
+    const dropzone = document.getElementById('dropzone').value.trim();
+    const weightInput = form.querySelector('input[name="weight"]:checked');
+    const weightLabel = weightInput ? weightInput.value : '';
+
+    currentDelivery = {
+      id: 'DR-' + Math.floor(1000 + Math.random() * 9000),
+      name, dropzone, weightLabel
+    };
+
+    document.getElementById('route-id').textContent = currentDelivery.id;
+    document.getElementById('route-summary').textContent =
+      'To ' + name + ' \u2014 ' + dropzone + (weightLabel ? ' \u00b7 ' + weightLabel + ' package' : '');
+    document.getElementById('sender-label').textContent = 'Depot';
+    document.getElementById('dest-label').textContent = truncate(name, 16);
+
+    document.getElementById('tm-altitude').textContent = '142 ft';
+    document.getElementById('tm-speed').textContent = '31 mph';
+    startEtaCountdown();
+
+    setBadge('IN TRANSIT');
+    idleNote.hidden = true;
+    routeActions.hidden = false;
+    podPanel.hidden = true;
+    btnReceived.disabled = false;
+    btnError.disabled = false;
+
+    drone.classList.remove('is-returning');
+    drone.classList.add('is-active');
+    droneAnim.setAttribute('keyPoints', '0;1');
+    droneAnim.setAttribute('repeatCount', '1');
+    try { if (droneAnim.beginElement) droneAnim.beginElement(); } catch (err) { /* SMIL not supported; drone stays visible without motion */ }
+
+    form.reset();
+    showTab('tab-track');
+  });
+
+  // ---------- Package received ----------
+  btnReceived.addEventListener('click', function(){
+    if (!currentDelivery) return;
+
+    stopEtaCountdown();
+    tmEta.textContent = 'Arrived';
+    const code = genCode('POD', 6);
+    setBadge('DELIVERED', 'delivered');
+
+    podPanel.hidden = false;
+    podPanel.classList.remove('is-error');
+    document.getElementById('pod-title').textContent = 'Package received';
+    document.getElementById('pod-code').textContent = code;
+    document.getElementById('pod-desc').textContent = 'Proof-of-delivery code logged for ' + currentDelivery.id + '.';
+
+    logs.unshift({
+      id: currentDelivery.id, name: currentDelivery.name, dropzone: currentDelivery.dropzone,
+      weightLabel: currentDelivery.weightLabel, status: 'Delivered', detail: code,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    });
+    renderLogs();
+
+    btnReceived.disabled = true;
+    btnError.disabled = true;
+    currentDelivery = null;
+  });
+
+  // ---------- Error: return to origin ----------
+  btnError.addEventListener('click', function(){
+    if (!currentDelivery) return;
+
+    stopEtaCountdown();
+    tmEta.textContent = '\u2014';
+    setBadge('RETURNING TO ORIGIN', 'returning');
+    btnReceived.disabled = true;
+    btnError.disabled = true;
+    drone.classList.add('is-returning');
+
+    droneAnim.setAttribute('keyPoints', '1;0');
+    droneAnim.setAttribute('repeatCount', '1');
+    try { if (droneAnim.beginElement) droneAnim.beginElement(); } catch (err) { /* SMIL not supported */ }
+
+    const finishedDelivery = currentDelivery;
+
+    setTimeout(function(){
+      podPanel.hidden = false;
+      podPanel.classList.add('is-error');
+      document.getElementById('pod-title').textContent = 'Returned to origin';
+      document.getElementById('pod-code').textContent = finishedDelivery.id;
+      document.getElementById('pod-desc').textContent = 'Delivery could not be completed and the drone returned to the sender.';
+
+      logs.unshift({
+        id: finishedDelivery.id, name: finishedDelivery.name, dropzone: finishedDelivery.dropzone,
+        weightLabel: finishedDelivery.weightLabel, status: 'Returned', detail: 'Returned to origin',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+      renderLogs();
+
+      drone.classList.remove('is-active', 'is-returning');
+      currentDelivery = null;
+    }, 7000);
+  });
+
+  // ---------- Logs table ----------
+  function renderLogs(){
+    if (logs.length === 0){
+      logsEmpty.hidden = false;
+      logsTablePanel.hidden = true;
+      return;
+    }
+    logsEmpty.hidden = true;
+    logsTablePanel.hidden = false;
+    logsBody.innerHTML = logs.map(function(row){
+      const badgeClass = row.status === 'Delivered' ? 'delivered' : 'returned';
+      return '<tr>' +
+        '<td>' + row.id + '</td>' +
+        '<td>' + row.name + '</td>' +
+        '<td>' + row.dropzone + '</td>' +
+        '<td>' + row.weightLabel + '</td>' +
+        '<td><span class="badge ' + badgeClass + '"><span class="badge-dot"></span>' + row.status + '</span></td>' +
+        '<td>' + row.detail + '</td>' +
+        '<td>' + row.time + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+</script>
+
+</body>
+</html>
