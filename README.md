@@ -1,10 +1,10 @@
 # Drone Delivery Data Dashboard
 
-A dashboard system that enables an autonomous drone to pick up and deliver a package from a sender to a designated destination. The system supports the complete delivery workflow — from package request through navigation, delivery monitoring, and proof of delivery.
+A dashboard system that enables an autonomous drone to pick up and deliver a package from a sender to a designated destination. The system supports the complete delivery workflow from package request through navigation, delivery monitoring, and proof of delivery.
 
 ## Overview
 
-The Drone Delivery Data Dashboard is designed to coordinate and visualize the end-to-end lifecycle of an autonomous package delivery. It provides real-time visibility into drone operations, enabling users to request deliveries, track drone navigation, monitor delivery status, and confirm successful drop-off.
+The Drone Delivery Data Dashboard is designed to coordinate and visualize the lifecycle of an autonomous package delivery. It provides real-time visibility into drone operations, enabling users to request deliveries, track drone navigation, monitor delivery status, and confirm successful drop-off.
 
 ## Features
 
